@@ -1,0 +1,14 @@
+atari_py 
+cffi
+gym[atari]==0.10.5
+joblib 
+mpi4py 
+numpy
+opencv-python 
+pillow 
+pygame
+scipy 
+six 
+tensorboard
+tensorflow<2.0
+ctoybox==0.4.0
