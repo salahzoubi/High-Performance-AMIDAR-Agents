@@ -116,7 +116,11 @@ fired = False
 with Toybox('amidar') as tb:
 
 
-    for i in range(200):
+    for i in range(900):
+
+
+        if i % 100 == 0:
+            move.button1 = False
 
         tb.apply_action(move)
 
@@ -125,25 +129,23 @@ with Toybox('amidar') as tb:
             
             with AmidarIntervention(tb) as intervention:
 
-
-                if i == 0:
-                    intervention.game.player.position = intervention.tile_to_worldpoint(intervention.get_tile_by_pos(tx =19  ,ty =0))
-
-
                 game = intervention.game
 
                 player_pos = intervention.worldpoint_to_tilepoint(game.player.position) 
                 enemy_pos_0 = intervention.worldpoint_to_tilepoint(game.enemies[0].position)
                 enemy_pos_1 = intervention.worldpoint_to_tilepoint(game.enemies[1].position) 
                 enemy_pos_2 = intervention.worldpoint_to_tilepoint(game.enemies[2].position)  
-                enemy_pos_3 = intervention.worldpoint_to_tilepoint(game.enemies[3].position) 
-                #
-                # if player_pos == starting_pos: ##Checking if the agent died, if so, reset everything to go up (this will probably be changed to down as the loop goes further in the body since gen_adj_move is made that way)
-                #     move = Input()
-                #     move.up = True
-                #     direction = "up"
-                #     last_move = direction
-                #     print(move)
+                enemy_pos_3 = intervention.worldpoint_to_tilepoint(game.enemies[3].position)
+
+                if i == 0:
+                    starting_pos = player_pos ##takes in the starting position
+
+                if player_pos == starting_pos: ##Checking if the agent died, if so, reset everything to go up (this will probably be changed to down as the loop goes further in the body since gen_adj_move is made that way)
+                    move = Input()
+                    move.up = True
+                    direction = "up"
+                    last_move = direction
+                    print(move)
 
 
                 #Array that measures the manhattan distance of the player to the enemies
@@ -185,7 +187,7 @@ with Toybox('amidar') as tb:
 
 
 
-                print("{}.".format(i/15), direction, move_changed)
+                print("{}.".format(i/15), direction)
 
 
                 
