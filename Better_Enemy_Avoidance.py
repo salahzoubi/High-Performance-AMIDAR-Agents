@@ -172,7 +172,7 @@ stuck_ct = 0
 with Toybox('amidar') as tb:
 
 
-    for i in range(2000):
+    for i in range(2300):
 
 
         if i % 100 == 0:
@@ -250,10 +250,7 @@ with Toybox('amidar') as tb:
                 else:
                     stuck_ct += 1
 
-
             move = update_dir(direction, move, fired)
-
-
 
             print( available, direction, check_next_move(player_pos, generated[1], pos_history), move, player_pos, stuck_ct)
 
@@ -276,7 +273,7 @@ with Toybox('amidar') as tb:
 
 for i in frames:
     imshow(i)
-    pause(0.1)
+    pause(.01)
 
 show()
 
