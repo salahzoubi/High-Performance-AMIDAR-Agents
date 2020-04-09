@@ -18,31 +18,20 @@ def calc_distance(one, two):
 
 
 
-def get_walls(tiles):
-    
-    walls = []
-    
-    for i in range(len(tiles)):
-        for j in range(len(tiles[i])):
-            if tiles[i][j] == 'Empty':
-                coord = (i,j)
-                walls.append(coord)
-    return walls
-    
-
 
 
 def available_moves(pos, intervention): #returns a list of available "legal" moves in the format 
     #[up, down, left, right] given the current position of the agent
     
     possible_actions = [True] * 4
-    
+
+
     x = pos.tx
     y = pos.ty
 
-    if (x,y) == (0,0): #Edge cases, to deal with whether the agent is at a corner or not...
-        return[False, True, False, True]
-    # elif (x,y) == (0, )
+    # if (x,y) == (0,0): #Edge cases, to deal with whether the agent is at a corner or not...
+    #     return[False, True, False, True]
+
     
     try:
         tile = intervention.get_tile_by_pos(x + 1, y) #Can't move right...
@@ -52,19 +41,19 @@ def available_moves(pos, intervention): #returns a list of available "legal" mov
     
     try: 
         tile = intervention.get_tile_by_pos(x - 1, y) #Can't move left...
-        possible_actions[2] = False if (tile.tag == "Empty" or x <= 0) else True
+        possible_actions[2] = False if (tile.tag == "Empty" or x <= 1) else True
     except:
         possible_actions[2] = False
 
     try: 
         tile = intervention.get_tile_by_pos(x, y - 1) #Can't move down...
-        possible_actions[1] = False if (tile.tag == "Empty" or y >= 31) else True
+        possible_actions[1] = False if (tile.tag == "Empty" or y >= 30) else True
     except:
         possible_actions[1] = False
         
     try: 
         tile = intervention.get_tile_by_pos(x, y + 1) #Can't move up...
-        possible_actions[0] = False if (tile.tag == "Empty" or y <= 0 ) else True
+        possible_actions[0] = False if (tile.tag == "Empty" or y <= 1 ) else True
     except:
         possible_actions[0] = False
     
@@ -100,6 +89,83 @@ def gen_adj_move(direction, move,  moves):
     return (mover, direct)
 
 
+def visited_before(direction, pos, pos_history): #checks whether the moving in the given direction ends the agent in a position that has been visited before...
+
+    x = pos.tx
+    y = pos.ty
+    visited = False
+
+    if direction == "up":
+        if (x, y-1) in pos_history:
+            visited = True
+    elif direction == "down":
+        if (x, y+1) in pos_history:
+            visited = True
+    elif direction == "left":
+        if (x-1, y) in pos_history:
+            visited = True
+    else:
+        if (x+1, y) in pos_history:
+            visited = True
+
+    return visited
+
+
+def gen_direction(direction, direction_hist, available_moves, pos, pos_history): #enemy spotted, direction must be changed to an adjacent one...
+
+
+        dir = direction
+        if len(direction_hist) >= 3 and direction == (direction_hist[-1] and direction_hist[-2] and direction_hist[-3]): #atleast 4 moves have been made and direction has not been changed for two moves...
+
+            possible_directions = []
+
+            if available_moves[0]: possible_directions.append("up")
+            if available_moves[1]: possible_directions.append("down")
+            if available_moves[2]: possible_directions.append("left")
+            if available_moves[3]: possible_directions.append("right")
+
+
+            if direction == "up" or direction == "down": #do some checks
+                if "left" in possible_directions and "right" in possible_directions:
+                    if visited_before("left", pos, pos_history):
+                        dir = "right"
+                    elif visited_before("right", pos, pos_history):
+                        dir = "left"
+                    else:
+                        dir = "left"
+
+                elif "left" in possible_directions and not "right" in possible_directions:
+                    if not visited_before("left", pos, pos_history):
+                        dir = "left"
+
+                elif  "right" in possible_directions and not "left" in possible_directions:
+                   if not visited_before("right", pos, pos_history):
+                       dir = "right"
+
+
+            elif direction == "left" or direction == "right":
+
+                if "up" in possible_directions and "down" in possible_directions:
+                    if visited_before("up", pos, pos_history):
+                        dir = "down"
+                    elif visited_before("down", pos, pos_history):
+                        dir = "up"
+                    else:
+                        dir = "up"
+                elif "up" in possible_directions and not "down" in possible_directions:
+                    if not visited_before("up", pos,pos_history):
+                        dir = "up"
+                elif "down" in possible_directions and not "up" in possible_directions:
+                    if not visited_before("down", pos, pos_history):
+                        dir = "down"
+
+
+
+        return dir
+
+
+
+
 def check_next_move (pos, direction, position_history): #Checks whether the agent is back tracking or not... returns true if position has been taken before
 
     x = pos.tx
@@ -114,24 +180,18 @@ def check_next_move (pos, direction, position_history): #Checks whether the agen
     elif direction == "down":
         return (x, y-1) in position_history
 
+def opposite_dir(direction): #returns an input object with the opposite direction
 
-def opposite_dir(move, direction): #returns an input object with the opposite direction
+    if direction == "up":
+        return "down"
+    elif direction == "down":
+        return "up"
+    elif direction == "right":
+        return "left"
+    elif direction == "left":
+        return "right"
 
-    if move.up:
-        move.up, move.down = False, True
-        direction = "down"
-    elif move.down:
-        move.down, move.up = False, True
-        direction = "up"
-    elif move.right:
-        move.right, move.left = False, True
-        direction = "left"
-    elif move.left:
-        move.left, move.right = False, True
-        direction = "right"
-
-    return (move, direction)
-
+    return
 def update_dir(direction, move, fired):
 
 
@@ -149,6 +209,49 @@ def update_dir(direction, move, fired):
         move.up = True
     return move
 
+def gen_normal_move(direction, available_moves, pos_history, pos):
+
+    dir = direction
+
+    possible_directions = []
+
+    if available_moves[0]: possible_directions.append("up")
+    if available_moves[1]: possible_directions.append("down")
+    if available_moves[2]: possible_directions.append("left")
+    if available_moves[3]: possible_directions.append("right")
+
+    if direction in possible_directions and not visited_before(direction, pos, pos_history): # keep moving in same direction if it leads to a position that hasn't been visited before
+        dir = direction
+
+    elif direction in possible_directions and visited_before(direction, pos, pos_history):
+        possible_directions = list(filter(lambda x: x != direction, possible_directions))
+        if len(possible_directions) <= 0:
+            dir = direction
+        else:
+            dir = random.choice(possible_directions)
+    else:
+        sample_directions = list(filter(lambda x: x != opposite_dir(direction), possible_directions))
+
+        if len(sample_directions) > 0:
+            dir = random.choice(sample_directions)
+        else:
+            dir = random.choice(possible_directions)
+
+    return dir
+
+
+def agent_stuck(pos, pos_history):
+
+    x = pos.tx
+    y = pos.ty
+
+    if len(pos_history) >= 5:
+        if (x,y) == pos_history[-1]:
+            return True
+
+    return False
+
+
 
 # In[7]:
 
@@ -164,23 +267,20 @@ frames = []
 move_changed = []
 direction_hist = []
 pos_history = []
-direction_hist.append(direction)
 move_changed.append(0)
+enemy_hist = []
+last_enemy_fired = -1
 fired = False
-stuck_ct = 0
 
 with Toybox('amidar') as tb:
 
 
-    for i in range(2300):
-
-
-        if i % 100 == 0:
-            move.button1 = False
+    for i in range(2000):
 
         tb.apply_action(move)
 
-        if i % 15 == 0:
+
+        if i % 10 == 0:
 
             
             with AmidarIntervention(tb) as intervention:
@@ -194,17 +294,20 @@ with Toybox('amidar') as tb:
                 enemy_pos_2 = intervention.worldpoint_to_tilepoint(game.enemies[2].position)  
                 enemy_pos_3 = intervention.worldpoint_to_tilepoint(game.enemies[3].position)
 
-                pos_history.append((player_pos.tx, player_pos.ty))
+
+                positions = [enemy_pos_0, enemy_pos_1, enemy_pos_2, enemy_pos_3]
 
 
                 if i == 0:
                     starting_pos = player_pos ##takes in the starting position
+                    print("we're back at square 1")
 
                 if player_pos == starting_pos: ##Checking if the agent died, if so, reset everything to go up (this will probably be changed to down as the loop goes further in the body since gen_adj_move is made that way)
                     move = Input()
                     move.up = True
                     direction = "up"
                     last_move = direction
+
 
                 #Array that measures the manhattan distance of the player to the enemies
 
@@ -213,59 +316,48 @@ with Toybox('amidar') as tb:
                 #Returns the Manhattan distance of the closest enemy to the agent
                 enemy_idx, closest_dist = min(enumerate(vals), key = lambda p: p[1])
 
-
-                if closest_dist <= 7:
-                        fired = True
-
-
-
                 available = available_moves(player_pos, intervention)
-                generated = gen_adj_move(direction,move, available)
 
 
+                if agent_stuck(player_pos, pos_history):
+                    print("I'm stuck")
 
-                if len(move_changed) <= 2 and not check_next_move(player_pos, generated[1], pos_history):
-                                move = generated[0]
-                                direction = generated[1]
-                                move_changed.append(0)
-                                direction_hist.append(direction)
 
-                elif not check_next_move(player_pos, generated[1], pos_history):
-
-                    if generated[1] != direction_hist[-1] and not check_next_move(player_pos, generated[1], pos_history): #sample_direction has changed
-                        if sum(move_changed[-2:]) == 2: #the last two moves were a change in direction -> don't change direction
-                                        move_changed.append(0)
-                                        direction_hist.append(direction)
-
-                        else: #otherwise, the last two moves were the same or not consecutive changes -> change direction normally.
-                                        move = generated[0]
-                                        direction = generated[1]
-                                        direction_hist.append(direction)
-                                        move_changed.append(1)
-                elif stuck_ct >= 5 and check_next_move(player_pos, generated[1], pos_history):
-                    dir = opposite_dir(move, direction)
-                    move = dir[0]
-                    direction = dir[1]
-                    stuck_ct = 0
+                if closest_dist <= 3 and enemy_idx is not last_enemy_fired:
+                        last_enemy_fired = enemy_idx
+                        fired = True
+                        print("jumped")
                 else:
-                    stuck_ct += 1
+                        fired = False
 
-            move = update_dir(direction, move, fired)
-
-            print( available, direction, check_next_move(player_pos, generated[1], pos_history), move, player_pos, stuck_ct)
+                enemy_hist.append(enemy_idx)
 
 
-                
-            frames.append(tb.get_rgb_frame())
+                direction = gen_direction(direction, direction_hist, available, player_pos, pos_history)
 
 
-#
-# out = cv2.VideoWriter('demo.mp4',cv2.VideoWriter_fourcc(*'mp4v'), 15, (10,10))
-#
-#
-# for i in range(len(frames)):
-#     out.write(frames[i])
-# out.release()
+
+                print("changing dir to: {}".format(direction))
+
+
+            # else:
+            #
+            #         direction = gen_normal_move(direction, available, pos_history, player_pos)
+
+
+
+                move = update_dir(direction, move, fired)
+                print("{}. {}; {}; {}; {}".format(i/10, available, direction, move, player_pos))
+
+
+                pos_history.append((player_pos.tx, player_pos.ty))
+                direction_hist.append(direction)
+
+                frames.append(tb.get_rgb_frame())
+
+
+
+
 
 
 # subplots(figsize=(20, 10))
@@ -280,7 +372,6 @@ show()
 # tight_layout() # makes it a little bigger.
 
 
-# In[ ]:
 
 
 
