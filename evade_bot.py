@@ -10,11 +10,15 @@ from matplotlib.animation import ArtistAnimation
 from matplotlib.pyplot import imshow, subplots, tight_layout, show, figure, pause
 import random
 import cv2
+from operator import itemgetter
 
 
 def calc_distance(one, two):
 
     return abs(one.tx -  two.tx) + abs(one.ty - two.ty)
+
+def calc_distance1(x1,y1,x2,y2):
+    return abs (x1 - x2) + abs(y1 - y2)
 
 def available_moves(pos, intervention): #returns a list of available "legal" moves in the format
     #[up, down, left, right] given the current position of the agent
@@ -54,7 +58,7 @@ def available_moves(pos, intervention): #returns a list of available "legal" mov
         possible_actions[0] = False
 
 
-    return possible_actions
+    return possible_actions #retur
 
 def get_enemy_dir(enemy_hist, enemy_pos): #returns the direction the enemy is moving in given the enemy's history of moves
 
@@ -70,7 +74,7 @@ def get_enemy_dir(enemy_hist, enemy_pos): #returns the direction the enemy is mo
     diff_y = y - prev_y
 
     if diff_x != 0 and diff_y != 0:
-        print("enemy position is: {}; and the last position is: {}".format((x,y), (prev_x, prev_y) ))
+        print("both directions x,y have somehow changed...")
 
     if diff_x > 0:
         return "right"
@@ -83,7 +87,55 @@ def get_enemy_dir(enemy_hist, enemy_pos): #returns the direction the enemy is mo
     elif diff_x == 0 and diff_y == 0:
         return "hasn't moved"
 
-def dir_max(pos, enemy_pos, enemy_direction): #returns maximum 
+def dir_max(pos, enemy_pos, enemy_direction, available): #returns direction that maximizes distance between agent and enemy
+
+    x = pos.tx
+    y = pos.ty
+
+    enemy_x = enemy_pos.tx
+    enemy_y = enemy_pos.ty
+
+    direction = "none"
+
+    right = (calc_distance1(x+1,y,enemy_x, enemy_y), "right")
+    left = (calc_distance1(x-1,y, enemy_x, enemy_y), "left")
+    up = (calc_distance1(x, y-1, enemy_x, enemy_y), "up")
+    down = (calc_distance1(x, y+1, enemy_x, enemy_y), "down")
+
+    possible_moves = []
+
+    if available[0]:
+        possible_moves.append(up)
+    if available[1]:
+        possible_moves.append(down)
+    if available[2]:
+        possible_moves.append(left)
+    if available[3]:
+        possible_moves.append(right)
+
+    direction = max(possible_moves, key = itemgetter(0))[1]
+
+    return direction
+
+def update_dir(direction, move, fired):
+    #takes in a direction, returns a move corresponding to that direction (fired is a boolean indicating whether the fire button should be activated)
+
+
+
+    move = Input()
+    if fired:
+        move.button1 = True
+
+    if direction == "right":
+        move.right = True
+    elif direction == "left":
+        move.left = True
+    elif direction == "down":
+        move.down = True
+    else:
+        move.up = True
+    return move
+
 
 
 
@@ -93,7 +145,8 @@ enemy_hist = {"enemy_0": [], "enemy_1": [], "enemy_2": [], "enemy_3": []}
 
 
 move = Input()
-move.up = True
+move.down = True
+direction = "down"
 
 
 with Toybox('amidar') as tb:
@@ -117,13 +170,9 @@ with Toybox('amidar') as tb:
                 enemy_2 = intervention.worldpoint_to_tilepoint(game.enemies[2].position)
                 enemy_3 = intervention.worldpoint_to_tilepoint(game.enemies[3].position)
 
-                if i > 0:
-                    print('{}. {}'.format(i, get_enemy_dir(enemy_hist['enemy_1'], enemy_1)))
+                available = available_moves(player_pos, intervention)
 
-                enemy_hist['enemy_0'].append( (enemy_0.tx, enemy_0.ty))
-                enemy_hist['enemy_1'].append((enemy_1.tx, enemy_1.ty))
-                enemy_hist['enemy_2'].append( (enemy_2.tx, enemy_2.ty))
-                enemy_hist['enemy_3'].append((enemy_3.tx, enemy_3.ty))
+                enemies = [enemy_0, enemy_1, enemy_2, enemy_3]
 
 
 
@@ -131,6 +180,28 @@ with Toybox('amidar') as tb:
                 calc_distance(player_pos, enemy_2), calc_distance(player_pos, enemy_3)]
                 #Returns the Manhattan distance of the closest enemy to the agent
                 enemy_idx, closest_dist = min(enumerate(vals), key = lambda p: p[1])
+
+
+                if i > 0:
+
+                    for k,v in enumerate(enemy_hist.keys()):
+                        if k == enemy_idx:
+                            desired = v
+
+
+                    dir = dir_max(player_pos, enemies[enemy_idx], get_enemy_dir(enemy_hist[v], enemies[enemy_idx]), available) #find direction that maximizes
+
+                    print('{}. {}'.format(i, dir))
+
+                enemy_hist['enemy_0'].append( (enemy_0.tx, enemy_0.ty))
+                enemy_hist['enemy_1'].append((enemy_1.tx, enemy_1.ty))
+                enemy_hist['enemy_2'].append( (enemy_2.tx, enemy_2.ty))
+                enemy_hist['enemy_3'].append((enemy_3.tx, enemy_3.ty))
+
+                print(enemy_idx)
+
+                move = update_dir(dir, move, False)
+
 
                 frames.append(tb.get_rgb_frame())
 
