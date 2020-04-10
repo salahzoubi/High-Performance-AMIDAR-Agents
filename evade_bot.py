@@ -74,7 +74,7 @@ def get_enemy_dir(enemy_hist, enemy_pos): #returns the direction the enemy is mo
     diff_y = y - prev_y
 
     if diff_x != 0 and diff_y != 0:
-        print("both directions x,y have somehow changed...")
+        print("both directions x,y have somehow changed... and the enemies pos was {} now it is {}".format((prev_x,prev_y), (x,y) ))
 
     if diff_x > 0:
         return "right"
@@ -153,11 +153,11 @@ with Toybox('amidar') as tb:
 
 
 
-    for i in range(100):
+    for i in range(500):
         tb.apply_action(move)
 
 
-        if i % 10 == 0:
+        if i % 5 == 0:
 
             with AmidarIntervention(tb) as intervention:
 
@@ -181,6 +181,7 @@ with Toybox('amidar') as tb:
                 #Returns the Manhattan distance of the closest enemy to the agent
                 enemy_idx, closest_dist = min(enumerate(vals), key = lambda p: p[1])
 
+                print("distances are: {} and closest is {}".format(vals, closest_dist))
 
                 if i > 0:
 
@@ -189,7 +190,7 @@ with Toybox('amidar') as tb:
                             desired = v
 
 
-                    dir = dir_max(player_pos, enemies[enemy_idx], get_enemy_dir(enemy_hist[v], enemies[enemy_idx]), available) #find direction that maximizes
+                    dir = dir_max(player_pos, enemies[enemy_idx], get_enemy_dir(enemy_hist[desired], enemies[enemy_idx]), available) #find direction that maximizes
 
                     print('{}. {}'.format(i, dir))
 
