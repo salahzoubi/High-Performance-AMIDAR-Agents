@@ -12,7 +12,7 @@ from toybox import Toybox, Input
 
 import numpy as np
 import math
-from matplotlib.pyplot import imshow, subplots, tight_layout
+from matplotlib.pyplot import imshow, subplots, tight_layout, show
 import random
 
 
@@ -81,8 +81,9 @@ with Toybox('amidar') as tb:
 
 
         
-subplots(figsize=(len(frames)*3, 4))
+subplots(figsize=(20, 10))
 imshow(np.hstack(frames))
+show()
 tight_layout() # makes it a little bigger.
 
 
