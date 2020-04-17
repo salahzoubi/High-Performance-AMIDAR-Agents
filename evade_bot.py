@@ -145,15 +145,15 @@ enemy_hist = {"enemy_0": [], "enemy_1": [], "enemy_2": [], "enemy_3": []}
 
 
 move = Input()
-move.down = True
-direction = "down"
+move.up = True
+direction = "up"
 
 
 with Toybox('amidar') as tb:
 
 
 
-    for i in range(200):
+    for i in range(400):
         tb.apply_action(move)
 
 
@@ -168,9 +168,9 @@ with Toybox('amidar') as tb:
                 #Random start position... here intervention.random_enemy_start() does not work as enemies is not defined
                 # inside the function when it is called  REMINDER: MAKE ISSUE ON GITHUB
 
-                #  code below works, however, agent ends up teleporting around map
-                # if i == 0:
-                #     game.player.position = intervention.tile_to_worldpoint(intervention.get_random_tile())
+                 # code below works, however, agent ends up teleporting around map
+                if i == 0:
+                    game.player.position = intervention.tile_to_worldpoint(intervention.get_tile_by_pos(0,16))
 
 
                 player_pos = intervention.worldpoint_to_tilepoint(game.player.position)
@@ -201,14 +201,12 @@ with Toybox('amidar') as tb:
 
                     dir = dir_max(player_pos, enemies[enemy_idx], get_enemy_dir(enemy_hist[desired], enemies[enemy_idx]), available) #find direction that maximizes
 
-                    print('{}. {}'.format(i, dir))
+                    print('{}. {}, pos: {}'.format(i, dir, player_pos))
 
                 enemy_hist['enemy_0'].append( (enemy_0.tx, enemy_0.ty))
                 enemy_hist['enemy_1'].append((enemy_1.tx, enemy_1.ty))
                 enemy_hist['enemy_2'].append( (enemy_2.tx, enemy_2.ty))
                 enemy_hist['enemy_3'].append((enemy_3.tx, enemy_3.ty))
-
-                print(enemy_idx)
 
                 move = update_dir(dir, move, False)
 
