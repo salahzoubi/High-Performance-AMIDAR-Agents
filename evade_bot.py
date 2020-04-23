@@ -139,6 +139,8 @@ def update_dir(direction, move, fired):
 
 
 
+
+
 frames = []
 
 enemy_hist = {"enemy_0": [], "enemy_1": [], "enemy_2": [], "enemy_3": []}
@@ -169,8 +171,8 @@ with Toybox('amidar') as tb:
                 # inside the function when it is called  REMINDER: MAKE ISSUE ON GITHUB
 
                  # code below works, however, agent ends up teleporting around map
-                if i == 0:
-                    game.player.position = intervention.tile_to_worldpoint(intervention.get_tile_by_pos(0,16))
+                # if i == 0:
+                #     game.player.position = intervention.tile_to_worldpoint(intervention.get_tile_by_pos(0,16))
 
 
                 player_pos = intervention.worldpoint_to_tilepoint(game.player.position)
@@ -178,15 +180,16 @@ with Toybox('amidar') as tb:
                 enemy_1 = intervention.worldpoint_to_tilepoint(game.enemies[1].position)
                 enemy_2 = intervention.worldpoint_to_tilepoint(game.enemies[2].position)
                 enemy_3 = intervention.worldpoint_to_tilepoint(game.enemies[3].position)
+                enemy_4 = intervention.worldpoint_to_tilepoint(game.enemies[4].position)
 
                 available = available_moves(player_pos, intervention)
 
-                enemies = [enemy_0, enemy_1, enemy_2, enemy_3]
+                enemies = [enemy_0, enemy_1, enemy_2, enemy_3, enemy_4]
 
 
 
                 vals = [calc_distance(player_pos, enemy_0), calc_distance(player_pos, enemy_1),
-                calc_distance(player_pos, enemy_2), calc_distance(player_pos, enemy_3)]
+                calc_distance(player_pos, enemy_2), calc_distance(player_pos, enemy_3), calc_distance(player_pos, enemy_4)]
                 #Returns the Manhattan distance of the closest enemy to the agent
                 enemy_idx, closest_dist = min(enumerate(vals), key = lambda p: p[1])
 
