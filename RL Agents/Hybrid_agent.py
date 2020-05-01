@@ -207,15 +207,16 @@ def check_score_dir(direction, pos, available, intervention):
                     dir = "up"
             if i == "down":
 
+
                 score = 0
                 y_down = y
 
 
                 for i in range(32):
-                    if  y_down + 1 <= 30 and intervention.get_tile_by_pos(x, y_down + 1).tag == "Unpainted":
+                    if  y_down + 1 <= 29 and intervention.get_tile_by_pos(x, y_down + 1).tag == "Unpainted":
                         score += (1/(i+1))
                         y_down += 1
-                    elif  y_down + 1 <= 30 and intervention.get_tile_by_pos(x, y_down + 1).tag == "Painted":
+                    elif  y_down + 1 <= 29 and intervention.get_tile_by_pos(x, y_down + 1).tag == "Painted":
                         y_down +=1
                     else:
                         # print("down score: {}".format(score))
@@ -243,10 +244,10 @@ def check_score_dir(direction, pos, available, intervention):
                 score = 0
                 x_right = x
                 for i in range(32):
-                    if  x_right+1 <= 31 and intervention.get_tile_by_pos(x_right+1, y).tag == "Unpainted":
+                    if  x_right+1 <= 30 and intervention.get_tile_by_pos(x_right+1, y).tag == "Unpainted":
                         score += (1/(i+1))
                         x_right += 1
-                    elif  x_right+1 <= 31 and intervention.get_tile_by_pos(x_right+1, y).tag == "Painted":
+                    elif  x_right+1 <= 30 and intervention.get_tile_by_pos(x_right+1, y).tag == "Painted":
                         x_right += 1
                     else:
                         # print("right score: {}".format(score))
@@ -254,6 +255,8 @@ def check_score_dir(direction, pos, available, intervention):
                 if score >= max_score:
                     max_score = score
                     dir = "right"
+
+    # print("Max Score: {}; and direction given is: {}".format(max_score, dir))
 
     return (dir,max_score)
 
@@ -284,6 +287,8 @@ def get_to_point(player_pos, point, intervention): #Generates a sequence of vali
     diff_x = x - point_x
     diff_y = y - point_y
     diff_hist = []
+
+
 
     while(diff_x != 0 or diff_y != 0):
 
@@ -444,84 +449,82 @@ last_score = []
 with Toybox('amidar') as tb:
 
 
-    for i in range(5500):
+    for i in range(10000):
+        tb.apply_action(move)
+
+        # if i % 100 == 0:
+        #
+        #     if len(last_score) > 0 and last_score[-1] == tb.get_score():
+        #         print(tb.get_score())
+        #     last_score.append(tb.get_score())
 
 
-        if len(move_to_take) <= 1:
-            while len(move_to_take) >0:
-                    move = update_dir(move_to_take.pop(), move, False)
-                    tb.apply_action(move)
-                    tb.apply_action(move)
-                    tb.apply_action(move)
-                    tb.apply_action(move)
-        else:
-
-            while len(move_to_take)> 0:
-                print(move_to_take)
-
-                desired_move = move_to_take.pop(0)
-                move = update_dir(desired_move, move, False)
-                tb.apply_action(move)
-                tb.apply_action(move)
-                tb.apply_action(move)
-                tb.apply_action(move)
-
-
-        if i % 3 == 0:
+        if i % 5 == 0:
 
             with AmidarIntervention(tb) as intervention:
+
 
                 game = intervention.game
                 enemies = game.enemies
 
+
+
                 if i == 0:
-                    for j in range(5):
+                    for j in range(4):
                         enemies.remove(enemies[0])
-                    # game.player.position = intervention.tile_to_worldpoint(intervention.get_tile_by_pos(31,29))
 
 
                 player_pos = intervention.worldpoint_to_tilepoint(game.player.position)
+                enemy_0 = intervention.worldpoint_to_tilepoint(game.enemies[0].position)
+                # enemy_1 = intervention.worldpoint_to_tilepoint(game.enemies[1].position)
+                # enemy_2 = intervention.worldpoint_to_tilepoint(game.enemies[2].position)
+                # enemy_3 = intervention.worldpoint_to_tilepoint(game.enemies[3].position)
+                # enemy_4 = intervention.worldpoint_to_tilepoint(game.enemies[4].position)
+
+
+
 
                 available = available_moves(player_pos, intervention)
-                # enemy_0 = intervention.worldpoint_to_tilepoint(game.enemies[0].position)
                 possible = possible_moves(available)
+                vals = [calc_distance(player_pos, enemy_0)]
+                enemies = [enemy_0]
+
+                # , calc_distance(player_pos, enemy_1),
+                # calc_distance(player_pos, enemy_2), calc_distance(player_pos, enemy_3), calc_distance(player_pos, enemy_4)
+                #Returns the Manhattan distance of the closest enemy to the agent
+                enemy_idx, closest_dist = min(enumerate(vals), key = lambda p: p[1])
+
+                if closest_dist <= 4:
+                    fired = True
+                else:
+                    fired = False
 
 
-                checked = check_score_dir(direction, player_pos, available, intervention) #returns (direction, score) that maximizes score
+                if i > 0 and closest_dist <= 10:
 
-                if checked[1] == 0: #that is, the agent can't see anywhere
-                    points = gen_board(intervention)
-                    closest_points = closest_unpainted_point(points,player_pos)
-                    closest_points = [x for x in closest_points if get_to_point(player_pos, x, intervention) != [-1] and x not in past_points]
-                    if len(closest_points) > 0:
-                        get = get_to_point(player_pos, closest_points[0], intervention)
-                        move_to_take.extend(get)
+                    max_dist = -1
+                    dir = None
 
-                    else:
+                    for dir,length in find_dir_length(possible, player_pos, intervention):
+                        projected = project_length(player_pos, dir, length)
 
-                        moves_but_opposite = [x for x in possible if x != get_opposite_direction(last_dir)]
-                        move_to_take.append(random.choice(moves_but_opposite))
+                        if calc_distance1(projected[0], projected[1],enemies[enemy_idx].tx,  enemies[enemy_idx].ty) > max_dist:
+                            max_dist = calc_distance1(projected[0], projected[1],enemies[enemy_idx].tx,  enemies[enemy_idx].ty)
+                            direction = dir
 
-
-
-                elif checked[0] != get_opposite_direction(last_dir) and not agent_stuck((player_pos.tx, player_pos.ty), last_pos):
-                    direction = checked[0]
-                    move_to_take.append(direction)
-
+                elif check_score_dir(direction, player_pos, available, intervention)[0] != get_opposite_direction(last_dir) and not agent_stuck((player_pos.tx, player_pos.ty), last_pos):
+                    direction = check_score_dir(direction, player_pos, available, intervention)[0]
 
                 elif agent_stuck((player_pos.tx, player_pos.ty), last_pos):
-                    direction = checked[0]
-                    move_to_take.append(direction)
-
+                        direction = check_score_dir(direction, player_pos, available, intervention)[0]
 
                 else:
                     direction = last_dir
-                    move_to_take.append(direction)
 
-
+                move = update_dir(direction, move, fired)
 
                 last_pos.append((player_pos.tx, player_pos.ty))
-                last_dir = move_to_take[len(move_to_take)-1]
+                last_dir = direction
 
                 frames.append(tb.get_rgb_frame())
 
@@ -531,7 +534,6 @@ for i in frames:
     imshow(i)
     pause(.000001)
 show()
-
 
 
                 # if last_pos == (player_pos.tx, player_pos.ty) and i > 0:

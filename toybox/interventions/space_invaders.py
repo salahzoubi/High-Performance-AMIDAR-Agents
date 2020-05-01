@@ -1,6 +1,9 @@
 from toybox.interventions.base import *
 from toybox.interventions.core import *
-import json
+try:
+    import ujson as json
+except:
+    import json
 """An API for interventions on Space Invaders."""
 
 class SpaceInvaders(Game):
@@ -24,6 +27,7 @@ class SpaceInvaders(Game):
 
         self.life_display_timer = life_display_timer
         self.enemy_shot_delay   = enemy_shot_delay
+        self._in_init           = False
 
 
 class Player(BaseMixin):
@@ -35,7 +39,7 @@ class Player(BaseMixin):
         x=None, y=None, w=None, h=None, speed=None, color=None, 
         alive=None, death_counter=None, death_hit_1=None):
 
-        self.intervention = intervention
+        super().__init__(intervention)
         self.x = x
         self.y = y
         self.w = w 
@@ -45,7 +49,7 @@ class Player(BaseMixin):
         self.alive = alive
         self.death_counter = death_counter
         self.death_hit_1 = death_hit_1
-
+        self._in_init = False
 
 class Laser(BaseMixin):
 
@@ -56,7 +60,7 @@ class Laser(BaseMixin):
         x=None, y=None, w=None, h=None, speed=None, color=None, 
         t=None, movement=None):
 
-        self.intervention = intervention
+        super().__init__(intervention)
         self.x = x
         self.y = y
         self.w = w 
@@ -65,7 +69,7 @@ class Laser(BaseMixin):
         self.movement = Direction.decode(intervention, movement, Direction)
         self.speed = speed
         self.color = Color.decode(intervention, color, Color)
-
+        self._in_init = False
 
 class LaserCollection(Collection):
 
@@ -74,6 +78,7 @@ class LaserCollection(Collection):
 
     def __init__(self, intervention, lasers):
         super().__init__(intervention, lasers, Laser)
+        self._in_init = False
 
 class SpriteDataCollection(Collection):
 
@@ -81,6 +86,7 @@ class SpriteDataCollection(Collection):
     
     def __init__(self, intervention, sprites):
         super().__init__(intervention, sprites, SpriteData)
+        self._in_init = False
 
     def decode(intervention, sprites, clz):
         return SpriteDataCollection(intervention, sprites)
@@ -93,12 +99,12 @@ class Ufo(BaseMixin):
 
     def __init__(self, intervention, x=None, y=None, appearance_counter=None, death_counter=None):
 
-        self.intervention       = intervention 
+        super().__init__(intervention)
         self.x                  = x
         self.y                  = y
         self.appearance_counter = appearance_counter
         self.death_counter      = death_counter
-
+        self._in_init = False
 
 class Enemy(BaseMixin):
 
@@ -107,7 +113,7 @@ class Enemy(BaseMixin):
 
     def __init__(self, intervention, x=None, y=None, row=None, col=None, id=None, alive=None, points=None, death_counter=None):
 
-        self.intervention = intervention
+        super().__init__(intervention)
         self.x = x
         self.y = y
         self.row = row
@@ -116,6 +122,7 @@ class Enemy(BaseMixin):
         self.alive = alive
         self.points = points
         self.death_counter = death_counter
+        self._in_init = False
     
 
 class EnemyCollection(Collection):
@@ -125,6 +132,7 @@ class EnemyCollection(Collection):
 
     def __init__(self, intervention, enemies):
         super().__init__(intervention, enemies, Enemy)
+        self._in_init = False
 
 
 class EnemiesMovementState(BaseMixin):
@@ -134,10 +142,11 @@ class EnemiesMovementState(BaseMixin):
 
     def __init__(self, intervention, move_counter=None, move_dir=None, visual_orientation=None):
 
-        self.intervention = intervention
+        super().__init__(intervention)
         self.move_counter = move_counter
         self.move_dir = Direction.decode(intervention, move_dir, Direction)
         self.visual_orientation = visual_orientation
+        self._in_init = False
 
 
 class SpaceInvadersIntervention(Intervention):

@@ -113,6 +113,7 @@ def dir_max(pos, enemy_pos, enemy_direction, available): #returns direction that
     if available[3]:
         possible_moves.append(right)
 
+    print(max(possible_moves, key = itemgetter(0))[0], max(possible_moves, key = itemgetter(0))[1])
     direction = max(possible_moves, key = itemgetter(0))[1]
 
     return direction
@@ -136,8 +137,99 @@ def update_dir(direction, move, fired):
         move.up = True
     return move
 
+def find_dir_length(possible, pos, intervention): #given the possible moves at the position given, returns the (direction, length of segment in that direction)
 
 
+    x = pos.tx
+    y = pos.ty
+
+    possible = possible_moves(available)
+    segments = []
+
+
+    if len(possible) > 0:
+
+        length = 0
+
+        for i in possible: #Check how much "length" going in each move yields over the board, return (direction, length)
+            if i == "up":
+                length = 0
+                y_up = y
+
+                for i in range(32): #Keep going up, if the nex tile is unpainted then add 1 to the score, else break
+                    if  y_up - 1 >= 0 and intervention.get_tile_by_pos(x, y_up - 1).tag != "Empty":
+                        length += 1
+                        y_up -= 1 #update y position to move one up
+                    else:
+                        # print("up score: {}".format(score))
+                        break
+                segments.append(("up", length))
+            if i == "down":
+                length = 0
+                y_down = y
+
+                for i in range(32): #Keep going up, if the nex tile is unpainted then add 1 to the score, else break
+                    if  y_down + 1 <= 30 and intervention.get_tile_by_pos(x, y_down + 1).tag != "Empty":
+                        length += 1
+                        y_down += 1 #update y position to move one up
+                    else:
+                        # print("up score: {}".format(score))
+                        break
+                segments.append(("down", length))
+
+            if i == "left":
+                length = 0
+                x_left = x
+
+                for i in range(32): #Keep going up, if the nex tile is unpainted then add 1 to the score, else break
+                    if  x_left - 1 >= 0 and intervention.get_tile_by_pos(x_left - 1, y).tag != "Empty":
+                        length += 1
+                        x_left -= 1 #update y position to move one up
+                    else:
+                        # print("up score: {}".format(score))
+                        break
+                segments.append(("left", length))
+
+            if i == "right":
+                length = 0
+                x_right = x
+
+                for i in range(32): #Keep going up, if the nex tile is unpainted then add 1 to the score, else break
+                    if  x_right + 1 <= 31 and intervention.get_tile_by_pos(x_right + 1, y).tag != "Empty":
+                        length += 1
+                        x_right += 1 #update y position to move one up
+                    else:
+                        # print("up score: {}".format(score))
+                        break
+                segments.append(("right", length))
+    print(segments)
+    return segments
+
+def project_length(pos, direction, length): #returns an updated position tuple of player position+length in desired direction
+
+
+    x = pos.tx
+    y = pos.ty
+
+    if direction == "up": return (x, y - length)
+    elif direction == "down": return(x, y+length)
+    elif direction == "left": return(x-length, y)
+    elif direction == "right": return(x+length, y)
+
+def possible_moves(available): #returns an array with the available moves in the form of strings
+
+    possible_moves = []
+
+    if available[0]:
+        possible_moves.append("up")
+    if available[1]:
+        possible_moves.append("down")
+    if available[2]:
+        possible_moves.append("left")
+    if available[3]:
+        possible_moves.append("right")
+
+    return possible_moves
 
 
 
@@ -159,7 +251,7 @@ with Toybox('amidar') as tb:
         tb.apply_action(move)
 
 
-        if i % 15 == 0:
+        if i % 3 == 0:
 
             with AmidarIntervention(tb) as intervention:
 
@@ -167,12 +259,10 @@ with Toybox('amidar') as tb:
 
                 game = intervention.game
 
-                #Random start position... here intervention.random_enemy_start() does not work as enemies is not defined
-                # inside the function when it is called  REMINDER: MAKE ISSUE ON GITHUB
 
                  # code below works, however, agent ends up teleporting around map
                 # if i == 0:
-                #     game.player.position = intervention.tile_to_worldpoint(intervention.get_tile_by_pos(0,16))
+                #     game.player.position = intervention.tile_to_worldpoint(intervention.get_tile_by_pos(31,30))
 
 
                 player_pos = intervention.worldpoint_to_tilepoint(game.player.position)
@@ -183,8 +273,9 @@ with Toybox('amidar') as tb:
                 enemy_4 = intervention.worldpoint_to_tilepoint(game.enemies[4].position)
 
                 available = available_moves(player_pos, intervention)
+                possible = possible_moves(available)
 
-                enemies = [enemy_0, enemy_1, enemy_2, enemy_3, enemy_4]
+                enemies = [(enemy_0.tx, enemy_0.ty), (enemy_1.tx,enemy_1.ty), (enemy_2.tx, enemy_2.ty), (enemy_3.tx, enemy_3.ty), (enemy_4.tx, enemy_4.ty)]
 
 
 
@@ -195,23 +286,31 @@ with Toybox('amidar') as tb:
 
 
 
-                if i > 0:
-
-                    for k,v in enumerate(enemy_hist.keys()):
-                        if k == enemy_idx:
-                            desired = v
 
 
-                    dir = dir_max(player_pos, enemies[enemy_idx], get_enemy_dir(enemy_hist[desired], enemies[enemy_idx]), available) #find direction that maximizes
+                if i > 0 and closest_dist <= 17:
 
-                    print('{}. {}, pos: {}'.format(i, dir, player_pos))
+                    max_dist = -1
+                    dir = None
+
+                    for dir,length in find_dir_length(possible, player_pos, intervention):
+                        projected = project_length(player_pos, dir, length)
+
+                        if calc_distance1(projected[0], projected[1],enemies[enemy_idx].tx,  enemies[enemy_idx].ty) > max_dist:
+                            max_dist = calc_distance1(projected[0], projected[1],enemies[enemy_idx].tx,  enemies[enemy_idx].ty)
+                            direction = dir
+
+                print(enemies)
+                    # print('{}. {}, pos: {}'.format(i, dir, player_pos))
 
                 enemy_hist['enemy_0'].append( (enemy_0.tx, enemy_0.ty))
                 enemy_hist['enemy_1'].append((enemy_1.tx, enemy_1.ty))
                 enemy_hist['enemy_2'].append( (enemy_2.tx, enemy_2.ty))
                 enemy_hist['enemy_3'].append((enemy_3.tx, enemy_3.ty))
 
-                move = update_dir(dir, move, False)
+                move = update_dir(direction, move, False)
+
+                last_dir = direction
 
 
                 frames.append(tb.get_rgb_frame())
@@ -220,6 +319,6 @@ with Toybox('amidar') as tb:
 
 for i in frames:
     imshow(i)
-    pause(.01)
+    pause(.00001)
 
 show()

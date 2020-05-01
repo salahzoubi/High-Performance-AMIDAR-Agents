@@ -464,7 +464,7 @@ with Toybox('amidar') as tb:
                 tb.apply_action(move)
                 tb.apply_action(move)
                 tb.apply_action(move)
-                tb.apply_action(move)
+                # tb.apply_action(move)
 
 
         if i % 3 == 0:
@@ -477,7 +477,7 @@ with Toybox('amidar') as tb:
                 if i == 0:
                     for j in range(5):
                         enemies.remove(enemies[0])
-                    # game.player.position = intervention.tile_to_worldpoint(intervention.get_tile_by_pos(31,29))
+                    game.player.position = intervention.tile_to_worldpoint(intervention.get_tile_by_pos(31,29))
 
 
                 player_pos = intervention.worldpoint_to_tilepoint(game.player.position)
@@ -531,45 +531,3 @@ for i in frames:
     imshow(i)
     pause(.000001)
 show()
-
-
-
-                # if last_pos == (player_pos.tx, player_pos.ty) and i > 0:
-                #     last_pos = (player_pos.tx, player_pos.ty)
-                #     continue
-                #
-                #
-                # else:
-                #     if len(move_to_take) <= 0:
-                #         closest_points = closest_unpainted_point(points,player_pos)
-                #         closest_points = [x for x in closest_points if get_to_point(player_pos, x, intervention) != [-1] and x not in past_points]
-                #         past_points.extend(closest_points)
-                #         print(closest_points)
-                #         move_to_take = get_to_point(player_pos, closest_points[0], intervention) if len(closest_points) > 0 else [direction]
-                #direction = move_to_take[0]
-                #move_to_take.pop(0)
-
-                #Random start position... here intervention.random_enemy_start() does not work as enemies is not defined
-                # inside the function when it is called  REMINDER: MAKE ISSUE ON GITHUB
-
-                 # code below works, however, agent ends up teleporting around map
-
-                                 #Array that measures the manhattan distance of the player to the enemies
-
-                # vals = [calc_distance(player_pos, enemy_0), calc_distance(player_pos, enemy_1),
-                # calc_distance(player_pos, enemy_2), calc_distance(player_pos, enemy_3), calc_distance(player_pos, enemy_4)]
-                # #Returns the Manhattan distance of the closest enemy to the agent
-                # enemy_idx, closest_dist = min(enumerate(vals), key = lambda p: p[1])
-                #
-                #
-                # if closest_dist <= 4:
-                #     fired = True
-                # else:
-                #     fired = False
-
-                # print("{}. position: {}; possible: {}; ".format(i, player_pos, possible_moves(available)))
-
-                # if check_score_dir(direction, player_pos, available, intervention)[1] == 0 and check_score_dir(get_opposite_direction(direction), player_pos, available, intervention)[1] == 0:
-                #     print("{}. and the closest point is: {}".format(i, closest_unpainted_point(points, player_pos)))
-                #     print("{}".format(get_to_point(player_pos, closest_unpainted_point(points, player_pos)[0], intervention) ))
-                #     break

@@ -1,84 +1,168 @@
 from toybox.interventions.base import *
 from toybox.interventions.core import * 
-import json
+try:
+  import ujson as json
+except:
+  import json
+import typing
 """An API for interventions on Breakout."""
 
 class Breakout(Game):
 
-    expected_keys = Game.expected_keys + ['paddle', 'is_dead', 'balls', 'ball_radius', 'paddle_speed', 'reset', 'bricks', 'paddle_width']
+  expected_keys = Game.expected_keys + ['paddle', 'is_dead', 'balls', 'ball_radius', 'paddle_speed', 'reset', 'bricks', 'paddle_width']
 
-    immutable_fields = ['balls', 'bricks', 'intervention']
+  immutable_fields = ['balls', 'bricks', 'intervention']
 
-    def __init__(self, intervention, 
-      score=None, lives=None, rand=None, level=None,
-      paddle=None, paddle_width=None, paddle_speed=None,
-      ball_radius=None, balls=None,
-      bricks=None,
-      reset=None, is_dead=None):
+  def __init__(self, intervention, 
+    score=None, lives=None, rand=None, level=None,
+    paddle=None, paddle_width=None, paddle_speed=None,
+    ball_radius=None, balls=None,
+    bricks=None,
+    reset=None, is_dead=None):
 
-        super().__init__(intervention, score, lives, rand, level)
-        self.paddle = Paddle.decode(intervention, paddle, Paddle)
-        self.reset = reset
-        self.ball_radius = ball_radius
-        self.bricks = BrickCollection.decode(intervention, bricks, BrickCollection)
-        self.balls = BallCollection.decode(intervention, balls, BallCollection)
-        self.paddle_speed = paddle_speed
-        self.paddle_width = paddle_width
-        self.is_dead = is_dead
+      super().__init__(intervention, score, lives, rand, level)
+      self.paddle = Paddle.decode(intervention, paddle, Paddle)
+      self.reset = reset
+      self.ball_radius = ball_radius
+      self.bricks = BrickCollection.decode(intervention, bricks, BrickCollection)
+      self.balls = BallCollection.decode(intervention, balls, BallCollection)
+      self.paddle_speed = paddle_speed
+      self.paddle_width = paddle_width
+      self.is_dead = is_dead
+      self._in_init = False  
+
+  def __eq__(self, other) -> Either:
+    names = {
+      'score'       : (self.score,        other.score), 
+      'lives'       : (self.lives,        other.lives), 
+      'level'       : (self.level,        other.level),
+      'paddle'      : (self.paddle,       other.paddle),
+      'reset'       : (self.reset,        other.reset),
+      'ball_radius' : (self.ball_radius,  other.ball_radius) ,
+      'bricks'      : (self.bricks,       other.bricks),
+      'balls'       : (self.balls,        other.balls),
+      'paddle_speed': (self.paddle_speed, other.paddle_speed),
+      'paddle_width': (self.paddle_width, other.paddle_width),
+      'is_dead'     : (self.is_dead,      other.is_dead)
+    }
+    return eq_map(names)
+
+    def __str__(self):
+        return """
+Breakout
+==========
+    score: {}
+    lives: {}
+    level: {}
+    paddle: {}
+    reset: {}
+    ball_radius: {}
+    bricks: {}
+    balls: {}
+    paddle_speed: {}
+    paddle_width: {}
+    is_dead: {}""".format(self.score, self.lives, self.level, str(self.paddle), 
+        self.reset, self.ball_radius, self.bricks.__str__(), self.balls.__str__(), self.paddle_speed,
+        self.paddle_width, self.is_dead)
 
 class Paddle(BaseMixin):
 
-    expected_keys = ['velocity', 'position']
-    immutable_fields = []
-
-    def __init__(self, intervention, velocity, position):
-        self.intervention = intervention
-        self.velocity = Vec2D.decode(intervention, velocity, Vec2D)
-        self.position = Vec2D.decode(intervention, position, Vec2D)
+  expected_keys = ['velocity', 'position']
+  immutable_fields = []  
+  
+  def __init__(self, intervention, velocity, position):
+    super().__init__(intervention)
+    self.velocity = Vec2D.decode(intervention, velocity, Vec2D)
+    self.position = Vec2D.decode(intervention, position, Vec2D)
+    self._in_init = False  
+  
+  def __eq__(self, other) -> Either:
+    names = {
+      'velocity': (self.velocity, other.velocity),
+      'position': (self.position, other.position)
+    }
+    return eq_map(names)   
+  
+  def __str__(self):
+      return '<position: {}, velocity: {}>'.format(self.position, self.velocity)
 
 
 class BrickCollection(Collection):
 
-    def __init__(self, intervention, bricks):
-        super().__init__(intervention, bricks, Brick)
+  def __init__(self, intervention, bricks):
+    super().__init__(intervention, bricks, Brick)
+    self._in_init = False  
 
-    def decode(intervention, bricks, clz):
-        return BrickCollection(intervention, bricks)
-
+  def decode(intervention, bricks, clz):
+    return BrickCollection(intervention, bricks)
 
 
 class Brick(BaseMixin):
 
-    expected_keys = ['destructible', 'depth', 'color', 'alive', 'points', 'size', 'position', 'row', 'col']
-    immutable_fields = ['intervention']
-      
-    def __init__(self, intervention, destructible, depth, color, alive, points, size, position, row, col):
-        self.intervention = intervention
-        self.destructible = destructible
-        self.depth = depth
-        self.color = Color.decode(intervention, color, Color)
-        self.alive = alive
-        self.points = points
-        self.size = Vec2D.decode(intervention, size, Vec2D)
-        self.position = Vec2D.decode(intervention, position, Vec2D)
-        self.row = row
-        self.col = col
+  expected_keys = ['destructible', 'depth', 'color', 'alive', 'points', 'size', 'position', 'row', 'col']
+  immutable_fields = ['intervention']
+    
+  def __init__(self, intervention, destructible, depth, color, alive, points, size, position, row, col):
+    super().__init__(intervention)
+    self.destructible = destructible
+    self.depth = depth
+    self.color = Color.decode(intervention, color, Color)
+    self.alive = alive
+    self.points = points
+    self.size = Vec2D.decode(intervention, size, Vec2D)
+    self.position = Vec2D.decode(intervention, position, Vec2D)
+    self.row = row
+    self.col = col
+    self._in_init = False
+
+  def __eq__(self, other) -> Either:
+    names = {
+      'destructible': (self.destructible, other.destructible),
+      'depth':        (self.depth,    other.depth),
+      'color':        (self.color,    other.color),
+      'alive':        (self.alive,    other.alive),
+      'points':       (self.points,   other.points),
+      'size':         (self.size,     other.size),
+      'position':     (self.position, other.position),
+      'row':          (self.row,      other.row),
+      'col':          (self.col,      other.col)
+    }
+    return eq_map(names)
+
 
 class BallCollection(Collection):
 
-    def __init__(self, intervention, balls):
-        super().__init__(intervention, balls, Ball)
+  def __init__(self, intervention, balls):
+    super().__init__(intervention, balls, Ball)
+    self._in_init = False  
+
+  def __str__(self):
+    if len(self) == 1:
+      return str(self[0])
+    else:
+      return '[{}]'.format(', '.join(str(b) for b in self))
 
 
 class Ball(BaseMixin): 
 
-    expected_keys = ['position', 'velocity']
-    immutable_fields = ['intervention']
+  expected_keys = ['position', 'velocity']
+  immutable_fields = ['intervention']  
 
-    def __init__(self, intervention, position, velocity):
-        self.intervention = intervention
-        self.position = Vec2D.decode(intervention, position, Vec2D)
-        self.velocity = Vec2D.decode(intervention, velocity, Vec2D)
+  def __init__(self, intervention, position, velocity):
+    super().__init__(intervention)
+    self.position = Vec2D.decode(intervention, position, Vec2D)
+    self.velocity = Vec2D.decode(intervention, velocity, Vec2D)
+    self._in_init = False  
+  
+  def __eq__(self, other) -> Either:
+    names = {
+        'position': (self.position, other.position),
+        'velocity': (self.velocity, other.velocity)
+    }
+    return eq_map(names)
+  
+  def __str__(self):
+    return 'Ball(position: {}, velocity: {})'.format(self.position, self.velocity)
 
 
 class BreakoutIntervention(Intervention):
