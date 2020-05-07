@@ -241,13 +241,14 @@ enemy_hist = {"enemy_0": [], "enemy_1": [], "enemy_2": [], "enemy_3": []}
 move = Input()
 move.up = True
 direction = "up"
+fired = False
 
 
 with Toybox('amidar') as tb:
 
 
 
-    for i in range(400):
+    for i in range(2000):
         tb.apply_action(move)
 
 
@@ -259,10 +260,6 @@ with Toybox('amidar') as tb:
 
                 game = intervention.game
 
-
-                 # code below works, however, agent ends up teleporting around map
-                # if i == 0:
-                #     game.player.position = intervention.tile_to_worldpoint(intervention.get_tile_by_pos(31,30))
 
 
                 player_pos = intervention.worldpoint_to_tilepoint(game.player.position)
@@ -293,14 +290,17 @@ with Toybox('amidar') as tb:
                     max_dist = -1
                     dir = None
 
+                    if closest_dist <= 4:
+                        fired = True
+                    else:
+                        fired = False
+
                     for dir,length in find_dir_length(possible, player_pos, intervention):
                         projected = project_length(player_pos, dir, length)
 
-                        if calc_distance1(projected[0], projected[1],enemies[enemy_idx].tx,  enemies[enemy_idx].ty) > max_dist:
-                            max_dist = calc_distance1(projected[0], projected[1],enemies[enemy_idx].tx,  enemies[enemy_idx].ty)
+                        if calc_distance1(projected[0], projected[1],enemies[enemy_idx][0],  enemies[enemy_idx][1]) > max_dist:
+                            max_dist = calc_distance1(projected[0], projected[1],enemies[enemy_idx][0],  enemies[enemy_idx][1])
                             direction = dir
-
-                print(enemies)
                     # print('{}. {}, pos: {}'.format(i, dir, player_pos))
 
                 enemy_hist['enemy_0'].append( (enemy_0.tx, enemy_0.ty))
@@ -308,7 +308,7 @@ with Toybox('amidar') as tb:
                 enemy_hist['enemy_2'].append( (enemy_2.tx, enemy_2.ty))
                 enemy_hist['enemy_3'].append((enemy_3.tx, enemy_3.ty))
 
-                move = update_dir(direction, move, False)
+                move = update_dir(direction, move, fired)
 
                 last_dir = direction
 
