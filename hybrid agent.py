@@ -504,7 +504,7 @@ for k in keys:
                         enemy_1 = intervention.worldpoint_to_tilepoint(game.enemies[1].position)
                         enemy_2 = intervention.worldpoint_to_tilepoint(game.enemies[2].position)
                         enemy_3 = intervention.worldpoint_to_tilepoint(game.enemies[3].position)
-                        enemy_4 = intervention.worldpoint_to_tilepoint(game.enemies[3].position)
+                        enemy_4 = intervention.worldpoint_to_tilepoint(game.enemies[4].position)
 
 
 
